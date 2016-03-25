@@ -1,7 +1,7 @@
 from rauth import OAuth1Service
 import json
 import requests
-import urllib2
+import urllib3
 
 xing = OAuth1Service(
     name='xing',
@@ -19,12 +19,26 @@ request_token, request_token_secret = xing.get_request_token(
 authorize_url = xing.get_authorize_url(request_token)
 
 print 'Visit this URL in your browser: ' + authorize_url
-pin = input('Enter PIN from browser: ')
+pin = input('Enter PIN from the oauth_verifier field '
+	'(last 4 digits in the redirect URL): ')
 session = xing.get_auth_session(request_token,
                                    request_token_secret,
                                    method='POST',
                                    data={'oauth_verifier': pin})
-r = session.get('/v1/users/find',
-                params={'keywords': 'php,bangalore','format':'json','limit':'100','user_fields':'page_name'},
+
+keywords = raw_input("Enter comma separated keywords"
+					" to search for - ")
+count = raw_input("No of search results desired - ")
+
+response = session.get('/v1/users/find',
+                params={'keywords': keywords,'format':'json',
+                'limit':count, 'user_fields':'page_name, haves'},
                 header_auth=True)
-response_json = r.json()
+profile_data = response.json()
+
+# Print the data obtained in the get request.
+for i in range(0,int(count)):
+    print(i+1)
+    print 'Name :', profile_data['users']['items'][i]['user']['page_name']
+    print 'Skills :', profile_data['users']['items'][i]['user']['haves']
+    print('\n')
